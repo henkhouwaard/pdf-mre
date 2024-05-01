@@ -14,4 +14,13 @@
     <PackageReference Include="itext.pdfhtml" Version="5.0.3"/>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="FreeSans.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="selfsigned.p12">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

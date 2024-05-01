@@ -10,12 +10,14 @@ using iText.Signatures;
 using Org.BouncyCastle.Pkcs;
 using Path = System.IO.Path;
 
+PdfService.GenereerPdf();
+
 public static class PdfService
 {
     private static readonly string ResourcesPath =
         Path.GetDirectoryName(Assembly.GetAssembly(typeof(PdfService))!.Location)!;
 
-    private static readonly string Pkcs12File = Path.Combine(ResourcesPath, "henkselfsigned.p12");
+    private static readonly string Pkcs12File = Path.Combine(ResourcesPath, "selfsigned.p12");
     private static readonly string FreeSansTtf = Path.Combine(ResourcesPath, "FreeSans.ttf");
     private const string Pkcs12Password = "henk";
 
@@ -51,11 +53,10 @@ public static class PdfService
 
     public static void GenereerPdf()
     {
-        using var unsignedWriteStream = new FileStream(Path.Combine(ResourcesPath, "unsigned.pdf"), FileMode.Create);
+        using var unsignedWriteStream = new FileStream("unsigned.pdf", FileMode.Create);
         using var writer = new PdfWriter(unsignedWriteStream,
             new WriterProperties().AddUAXmpMetadata().SetPdfVersion(PdfVersion.PDF_1_7));
         using var pdfDoc = new PdfDocument(writer);
-        using var writeStream = new MemoryStream();
         {
             pdfDoc.SetTagged();
             pdfDoc.GetCatalog()
@@ -73,7 +74,7 @@ public static class PdfService
                 store.Load(fs, Pkcs12Password.ToCharArray());
             }
 
-            string alias = null;
+            string alias = null!;
             foreach (var al in store.Aliases)
             {
                 alias = al;
@@ -89,9 +90,10 @@ public static class PdfService
             IExternalSignature pks = new PrivateKeySignature(new PrivateKeyBC(pk), DigestAlgorithms.SHA256);
 
             // onderteken document
-            using var signingFileReader = new FileStream(Path.Combine(ResourcesPath, "signed.pdf"), FileMode.Open);
+            using var signingFileReader = new FileStream("unsigned.pdf", FileMode.Open);
             using var signingReader = new PdfReader(signingFileReader);
-            var signer = new PdfSigner(signingReader, writeStream, new StampingProperties().UseAppendMode());
+            using var signingWriteStream = new FileStream("signed.pdf", FileMode.Create);
+            var signer = new PdfSigner(signingReader, signingWriteStream, new StampingProperties().UseAppendMode());
             signer.SetLocation("Earth");
             signer.SetReason("I am the author of this document");
             signer.SetPageNumber(signer.GetDocument().GetNumberOfPages());
